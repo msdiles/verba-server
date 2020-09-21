@@ -1,9 +1,11 @@
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
+import { QueryResult } from "pg"
 
 import { HTTPException } from "./../utils/error.handler"
 import pool from "../utils/sql.config"
-import { QueryResult } from "pg"
+
+import Email from "../utils/email.api"
 
 export interface IUser {
   id: string
@@ -132,7 +134,11 @@ class AuthController {
     try {
       return await jwt.verify(token, secret)
     } catch (e) {
-      throw new HTTPException(401, "Invalid token", e)
+      if (e.message === "jwt expired") {
+        throw new HTTPException(401, "Token expired", e)
+      } else {
+        throw new HTTPException(401, "Invalid token", e)
+      }
     }
   }
 
@@ -183,11 +189,68 @@ class AuthController {
       throw new Error(e)
     }
   }
-  static async getInfoAboutUserThroughEmail() {}
-  static async createResetPasswordURL() {}
-  static async saveResetTokenToDatabase() {}
-  static async checkResetToken() {}
-  static async changePassword() {}
+  static async getInfoAboutUserThroughEmail(
+    email: string
+  ): Promise<QueryResult<any>> {
+    try {
+      const queryRes = await pool.query("SELECT * FROM users WHERE email=$1", [
+        email,
+      ])
+      return queryRes
+    } catch (e) {
+      throw new Error(e)
+    }
+  }
+  static async createResetPasswordURL(email: string): Promise<void> {
+    try {
+      const userData = await this.getInfoAboutUserThroughEmail(email)
+      const payload = await this.getTokenPayload(userData)
+      const resetToken = await this.createAccessToken(payload, "3m")
+      await this.saveResetTokenToDatabase(payload.id, resetToken)
+      const sender = new Email(resetToken, payload.id, email)
+      sender.sendEmail(email, payload.id, resetToken)
+    } catch (e) {}
+  }
+  static async saveResetTokenToDatabase(
+    id: string,
+    resetToken: string
+  ): Promise<void> {
+    try {
+      await pool.query(
+        "INSERT INTO resetTokens (user_id,reset_token) VALUES ($1,$2) ON CONFLICT (user_id) DO UPDATE SET reset_token = $2",
+        [id, resetToken]
+      )
+    } catch (e) {
+      throw new Error(e)
+    }
+  }
+  static async checkResetToken(id: string, token: string): Promise<boolean> {
+    try {
+      const result = await pool.query(
+        "SELECT reset_token FROM resetTokens WHERE user_id=$1",
+        [id]
+      )
+      if (result.rows[0] && result.rows[0].reset_token === token) {
+        return true
+      }
+      return false
+    } catch (e) {
+      throw new Error(e)
+    }
+  }
+  static async changePassword(id: string, token: string, password: string) {
+    try {
+      await pool.query("UPDATE users SET password = $1 WHERE user_id =$2", [
+        password,
+        id,
+      ])
+      await pool.query("DELETE FROM resetTokens WHERE reset_token = $1", [
+        token,
+      ])
+    } catch (e) {
+      throw new Error(e)
+    }
+  }
 }
 
 export default AuthController

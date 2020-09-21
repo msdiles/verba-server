@@ -3,6 +3,8 @@ import express from "express"
 import compression from "compression"
 import helmet from "helmet"
 import logger from "morgan"
+import cors from "cors"
+
 import rateLimit from "express-rate-limit"
 import AuthRouter from "./routers/auth.routes"
 import WordRouter from "./routers/word.routes"
@@ -20,8 +22,9 @@ const app = new App({
     logger("dev"),
     express.json(),
     express.urlencoded({ extended: true }),
+    cors()
   ],
-  routers: [new AuthRouter([limiter]),new WordRouter()],
+  routers: [new AuthRouter([limiter]), new WordRouter()],
 })
 
 app.listen()

@@ -137,6 +137,13 @@ class Validator {
         .isLength({ min: 6, max: 1280 })
         .withMessage("Length less than 6 characters or more then 1280")
         .trim(),
+      check("id")
+        .not()
+        .isEmpty()
+        .withMessage("id is empty")
+        .isLength({ min: 6, max: 1280 })
+        .withMessage("Length less than 6 characters or more then 1280")
+        .trim(),
     ]
   }
 

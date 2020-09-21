@@ -159,9 +159,66 @@ class AuthControllerApi {
     }
   }
 
-  static async getResetURL() {}
-  static async resetCheck() {}
-  static async resetPassword() {}
+  static async getResetURL(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const email = req.body.email
+      const isUserExist = await AuthController.isUserExist(email)
+      res.status(202).send({ isUserExist })
+      if (isUserExist) {
+        AuthController.createResetPasswordURL(email)
+      }
+    } catch (e) {
+      next(e)
+    }
+  }
+  static async resetCheck(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { id, token } = req.body
+      const isToken = await AuthController.checkResetToken(id, token)
+      if (isToken) {
+        await AuthController.asyncVerify(
+          token,
+          <string>process.env.ACCESS_SECRET_KEY
+        )
+        res.status(200).send({ success: true })
+      } else {
+        throw new HTTPException(403, "Token not found")
+      }
+    } catch (e) {
+      next(e)
+    }
+  }
+  static async resetPassword(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { id, token, password } = req.body
+      const isToken = await AuthController.checkResetToken(id, token)
+      if (isToken) {
+        await AuthController.asyncVerify(
+          token,
+          <string>process.env.ACCESS_SECRET_KEY
+        )
+        const hashedPassword = await bcrypt.hash(password, saltRounds)
+        await AuthController.changePassword(id, token, hashedPassword)
+        res.status(200).send({ success: true })
+      } else {
+        throw new HTTPException(403, "Token not found")
+      }
+    } catch (e) {
+      next(e)
+    }
+  }
 }
 
 export default AuthControllerApi
