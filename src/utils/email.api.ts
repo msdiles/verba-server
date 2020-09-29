@@ -3,14 +3,14 @@ import Mail from "nodemailer/lib/mailer"
 import emailTemplate from "./email.template"
 
 class Email {
-  private token: string
-  private id: string
+  private resetDate: string
+  private resetId: string
   private email: string
   private transporter: Mail
   private mailOptions: any
-  constructor(token: string, id: string, email: string) {
-    this.token = token
-    this.id = id
+  constructor(resetDate: string, resetId: string, email: string) {
+    this.resetDate = resetDate
+    this.resetId = resetId
     this.email = email
     this.transporter = nodemailer.createTransport({
       service: <string>process.env.GMAIL_SERVICE_NAME,
@@ -24,21 +24,22 @@ class Email {
     })
   }
 
-  public async sendEmail(email: string, id: string, token: string) {
+  public async sendEmail() {
     try {
       const template = await emailTemplate(
         <string>process.env.CLIENT_URL,
-        id,
-        token
+        this.resetId,
+        this.resetDate
       )
       this.mailOptions = {
-        from: '"VERBA-AT-VERSUS" <misdalose@gmail.com>',
-        to: email,
+        from: '"VERBA" <misdalose@gmail.com>',
+        to: this.email,
         subject: "Reset password",
         html: template,
-
       }
+
       await this.transporter.verify()
+
       await this.transporter.sendMail(this.mailOptions)
 
       console.log("Email sended")

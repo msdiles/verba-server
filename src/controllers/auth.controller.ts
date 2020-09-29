@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import { QueryResult } from "pg"
+import { v4 as uuidv4 } from "uuid"
 
 import { HTTPException } from "./../utils/error.handler"
 import pool from "../utils/sql.config"
@@ -66,7 +67,7 @@ class AuthController {
   }
   static async createAccessToken(
     payload: IUser,
-    time: string = "30s"
+    time: string = "10s"
   ): Promise<string> {
     try {
       return await this.asyncSign(
@@ -204,33 +205,42 @@ class AuthController {
   static async createResetPasswordURL(email: string): Promise<void> {
     try {
       const userData = await this.getInfoAboutUserThroughEmail(email)
-      const payload = await this.getTokenPayload(userData)
-      const resetToken = await this.createAccessToken(payload, "3m")
-      await this.saveResetTokenToDatabase(payload.id, resetToken)
-      const sender = new Email(resetToken, payload.id, email)
-      sender.sendEmail(email, payload.id, resetToken)
+      const resetDate = new Date().getTime().toString()
+      const resetId = await uuidv4()
+      await this.saveResetTokenToDatabase(
+        userData.rows[0].user_id,
+        resetDate,
+        resetId
+      )
+      const sender = new Email(resetDate, resetId, email)
+      sender.sendEmail()
     } catch (e) {}
   }
   static async saveResetTokenToDatabase(
     id: string,
-    resetToken: string
+    resetDate: string,
+    resetId: string
   ): Promise<void> {
     try {
       await pool.query(
-        "INSERT INTO resetTokens (user_id,reset_token) VALUES ($1,$2) ON CONFLICT (user_id) DO UPDATE SET reset_token = $2",
-        [id, resetToken]
+        "INSERT INTO resetTokens (user_id,reset_id,reset_date) VALUES ($1,$2,$3) ON CONFLICT (user_id) DO UPDATE SET reset_id = $2,reset_date = $3",
+        [id, resetId, resetDate]
       )
     } catch (e) {
       throw new Error(e)
     }
   }
-  static async checkResetToken(id: string, token: string): Promise<boolean> {
+  static async checkResetToken(
+    resetId: string,
+    resetDate: string
+  ): Promise<boolean> {
     try {
       const result = await pool.query(
-        "SELECT reset_token FROM resetTokens WHERE user_id=$1",
-        [id]
+        "SELECT user_id FROM resetTokens WHERE reset_id=$1 AND reset_date =$2",
+        [resetId, resetDate]
       )
-      if (result.rows[0] && result.rows[0].reset_token === token) {
+
+      if (result.rows[0]) {
         return true
       }
       return false
@@ -238,15 +248,20 @@ class AuthController {
       throw new Error(e)
     }
   }
-  static async changePassword(id: string, token: string, password: string) {
+  static async changePassword(
+    resetId: string,
+    resetDate: string,
+    password: string
+  ) {
     try {
-      await pool.query("UPDATE users SET password = $1 WHERE user_id =$2", [
-        password,
-        id,
-      ])
-      await pool.query("DELETE FROM resetTokens WHERE reset_token = $1", [
-        token,
-      ])
+      await pool.query(
+        "UPDATE users SET password = $1 WHERE user_id =(SELECT user_id FROM resetTokens  WHERE reset_id=$2 AND reset_date =$3)",
+        [password, resetId, resetDate]
+      )
+      await pool.query(
+        "DELETE FROM resetTokens WHERE reset_id=$1 AND reset_date =$2",
+        [resetId, resetDate]
+      )
     } catch (e) {
       throw new Error(e)
     }

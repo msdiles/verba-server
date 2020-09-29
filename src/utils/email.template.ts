@@ -1,4 +1,4 @@
-const emailTemplate = (url: string, id: string, token: string) => {
+const emailTemplate = (url: string, resetId: string, resetDate: string) => {
   return `<table style="padding :0 15%;width:100%; font-size: 18px; font-family: Arial, sans-serif;">
   <tr>
     <td>
@@ -22,7 +22,7 @@ const emailTemplate = (url: string, id: string, token: string) => {
                           <tbody style="width:100%">
                             <tr style="width:100%">
                               <td align="center">
-                                <a href="${process.env.CLIENT_URL}/reset/${id}/${token}"
+                                <a href="${process.env.CLIENT_URL}/reset/${resetDate}/${resetId}"
                                   style="font-size:16px;color:#000000;display:inline-block;color:white;background-color:#2196F3;text-transform:uppercase;text-decoration:none;border-radius:30px;font-weight:800;padding:10px 40px">
                                   Reset password</a><br>
                                 <br>
