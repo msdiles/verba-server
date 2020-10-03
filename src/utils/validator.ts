@@ -225,6 +225,37 @@ class Validator {
         ]
     }
 
+    static quoteCreateRules = () => {
+        return [
+            check("data")
+                .not()
+                .isEmpty()
+                .withMessage("data is empty")
+        ]
+    }
+
+    static quoteUpdateRules = () => {
+        return [
+            check("data")
+                .not()
+                .isEmpty()
+                .withMessage("data is empty")
+        ]
+    }
+
+    static quoteDeleteRules = () => {
+        return [
+            check("id")
+                .not()
+                .isEmpty()
+                .withMessage("id is empty")
+                .isLength({min: 0, max: 128})
+                .withMessage("Length less than 6 characters or more then 1280")
+                .trim(),
+
+        ]
+    }
+
 
 }
 

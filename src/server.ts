@@ -8,9 +8,9 @@ import cors from "cors"
 import rateLimit from "express-rate-limit"
 import AuthRouter from "./routers/auth.routes"
 import WordRouter from "./routers/word.routes"
+import QuoteRouter from "./routers/quote.routes"
 
 import mongoConnect from "./utils/mongoConnect";
-import {log} from "util";
 
 const limiter = rateLimit({
     windowMs: 1 * 60 * 1000,
@@ -27,7 +27,7 @@ const app = new App({
         express.urlencoded({extended: true}),
         cors()
     ],
-    routers: [new AuthRouter([limiter]), new WordRouter()],
+    routers: [new AuthRouter([limiter]), new WordRouter(), new QuoteRouter()],
 })
 
 mongoConnect()

@@ -1,4 +1,4 @@
-import Word, {IWord} from "../models/word";
+import Word from "../models/word";
 import {NextFunction, Request, Response} from "express";
 
 
@@ -29,14 +29,11 @@ class WordControllerApi {
     ): Promise<void> {
         try {
             const word = new RegExp("^" + <string>req.query.word, "i")
-            console.log(word)
             const words = await Word.find({word})
             if (words.length) {
-                console.log(words)
                 const tenWords = words.slice(0, 10)
                 res.status(200).send({success: true, result: tenWords})
             } else {
-
                 res.status(200).send({success: false})
             }
         } catch (e) {
@@ -50,16 +47,12 @@ class WordControllerApi {
         next: NextFunction
     ): Promise<void> {
         try {
-            console.log(req.query.word)
-            // const word = <string>req.query.word
             const word = req.query.word
-
             const words = await Word.find({word})
             if (words.length) {
                 console.log(words)
                 res.status(200).send({success: true, result: words[0]})
             } else {
-
                 res.status(200).send({success: false})
             }
         } catch (e) {

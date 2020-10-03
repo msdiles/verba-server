@@ -1,11 +1,10 @@
 import express from "express"
-import {Request, Response} from "express"
 import Validator from "../utils/validator";
-import WordControllerApi from "../controllers/word.controller.api";
+import QuoteControllerApi from "../controllers/quote.controller.api";
 import AuthControllerApi from "../controllers/auth.controller.api";
 
-class WordRouter {
-    public path = "/words"
+class QuoteRouter {
+    public path = "/quotes"
     public router = express.Router()
     public middleWares
 
@@ -18,28 +17,28 @@ class WordRouter {
         this.router.post(
             "/add",
             AuthControllerApi.checkJWTMiddleware,
-            Validator.wordCreateRules(),
+            Validator.quoteCreateRules(),
             Validator.validate,
-            WordControllerApi.addWord)
+            QuoteControllerApi.addQuote)
         this.router.get(
             "/search",
-            WordControllerApi.searchWords)
+            QuoteControllerApi.searchQuotes)
         this.router.get(
             "/find",
-            WordControllerApi.findWord)
+            QuoteControllerApi.findQuote)
         this.router.put(
             "/update",
             AuthControllerApi.checkJWTMiddleware,
-            Validator.wordUpdateRules(),
+            Validator.quoteUpdateRules(),
             Validator.validate,
-            WordControllerApi.updateWord)
+            QuoteControllerApi.updateQuote)
         this.router.delete(
             "/delete",
             AuthControllerApi.checkJWTMiddleware,
-            Validator.wordDeleteRules(),
+            Validator.quoteDeleteRules(),
             Validator.validate,
-            WordControllerApi.deleteWord)
+            QuoteControllerApi.deleteQuote)
     }
 }
 
-export default WordRouter
+export default QuoteRouter
