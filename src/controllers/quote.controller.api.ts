@@ -1,5 +1,5 @@
 import Quote from "../models/quote"
-import {NextFunction, Request, Response} from "express";
+import {NextFunction, Request, Response} from "express"
 import pool from "../utils/sql.config"
 
 interface IConditions {
@@ -35,11 +35,16 @@ class QuoteControllerApi {
             let number = req.query.number
             let author = req.query.author as string
             let quote = req.query.quote as string
+            let inspiration = req.query.inspiration
+            let user = req.query.user as string
+            let favorite = req.query.favorite
             let conditions: IConditions = {}
             if (tag) conditions.tags = new RegExp(`^${tag}$`, "i")
             if (word) conditions.words = new RegExp(`^${word}$`, "i")
             if (author) conditions.author = new RegExp(`^${author}$`, "i")
             if (quote) conditions.quote = new RegExp(quote, "i")
+            if (inspiration) conditions.inspiration = inspiration
+            if (favorite) conditions.favorite = new RegExp(`^${user}$`, "i")
             if (Object.keys(conditions).length > 0) {
                 let words = await Quote.find({...conditions})
                 if (words.length) {
@@ -116,6 +121,8 @@ class QuoteControllerApi {
             next(e)
         }
     }
+
+
 }
 
 export default QuoteControllerApi

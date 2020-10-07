@@ -38,6 +38,7 @@ class QuoteRouter {
             Validator.quoteDeleteRules(),
             Validator.validate,
             QuoteControllerApi.deleteQuote)
+
     }
 }
 
