@@ -67,7 +67,7 @@ class AuthController {
   }
   static async createAccessToken(
     payload: IUser,
-    time: string = "10s"
+    time: string = "60m"
   ): Promise<string> {
     try {
       return await this.asyncSign(
@@ -96,7 +96,7 @@ class AuthController {
       const token = await this.asyncSign(
         { user: payload },
         <string>process.env.REFRESH_SECRET_KEY,
-        { expiresIn: "12m" }
+        { expiresIn: "30d" }
       )
       await pool.query(
         "INSERT INTO sessions (refresh_token,fingerprint,user_id) VALUES ($1,$2,(SELECT user_id FROM users WHERE users.user_id =$3))",
