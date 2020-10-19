@@ -32,7 +32,7 @@ class QuoteControllerApi {
     try {
       let tag = req.query.tag as string
       let word = req.query.word as string
-      let number = req.query.number || 1
+      let number = req.query.number
       let author = req.query.author as string
       let quote = req.query.quote as string
       let inspiration = req.query.inspiration || false
@@ -40,22 +40,29 @@ class QuoteControllerApi {
       let favorite = req.query.favorite || false
       let language = req.query.language as string
       let random = req.query.random || false
+      let added = req.query.added as string
       let conditions: IConditions = {}
       if (tag) conditions.tags = new RegExp(`^${tag}$`, "i")
       if (word) conditions.words = new RegExp(`^${word}$`, "i")
       if (author) conditions.author = new RegExp(`^${author}$`, "i")
       if (quote) conditions.quote = new RegExp(quote, "i")
-       conditions.inspiration = inspiration
+      conditions.inspiration = inspiration
       if (favorite) conditions.favorite = new RegExp(`^${user}$`, "i")
       if (language)
         conditions.language = new RegExp(`^${language.split(",").join("|")}$`, "i")
+      if(added){
+        let quotes = await Quote.find({userId:added})
+        res.status(200).send({success: true, result: quotes})
+        return
+      }
       if (random) {
-        let words = await Quote.aggregate(
-          [{$match: {"language": language || /.*/g}}, {$sample: {size: +number}}]
+        let quotes = await Quote.aggregate(
+          [{$match: {"language": language || /.*/g}}, {$sample: {size: +(number ?? 1)}}]
         )
-        res.status(200).send({success: true, result: words})
+        res.status(200).send({success: true, result: quotes})
         return
       } else if (Object.keys(conditions).length > 0) {
+        console.log(conditions)
         let words = await Quote.find({...conditions})
         if (words.length) {
           if (number) words = words.slice(0, +number)
@@ -69,7 +76,7 @@ class QuoteControllerApi {
         res.status(200).send({success: true, result: words})
         return
       }
-      res.status(200).send({success: false})
+      res.status(200).send({success: false,result:[]})
       return
     } catch (e) {
       next(e)

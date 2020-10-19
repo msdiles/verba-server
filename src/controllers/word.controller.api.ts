@@ -35,11 +35,20 @@ class WordControllerApi {
       const random = req.query.random
       const word = req.query.word as string
       const number = req.query.number || 10
+      let favorite = req.query.favorite || false
+      let user = req.query.user as string
       const language = req.query.language as string
+      let added = req.query.added as string
       let conditions: IConditions = {}
       if (word) conditions.word = new RegExp(`^${word}`, "i")
       if (language)
         conditions.language = new RegExp(`^${language.split(",").join("|")}$`, "i")
+      if (favorite) conditions.favorite = new RegExp(`^${user}$`, "i")
+      if(added){
+        let words = await Word.find({userId:added})
+        res.status(200).send({success: true, result: words})
+        return
+      }
       if (random) {
         let word = await Word.aggregate(
           [{$match: {"language": language || /.*/g}}, {$sample: {size: 1}}]
@@ -52,7 +61,7 @@ class WordControllerApi {
             return
           }
         }
-      } else if (word) {
+      } else if (word || Object.keys(conditions).length>0) {
         let words = await Word.find({...conditions})
         if (words.length) {
           words = words.slice(0, +number)
